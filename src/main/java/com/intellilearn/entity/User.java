@@ -1,7 +1,6 @@
 package com.intellilearn.entity;
 
 import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
 
 @Entity
@@ -117,4 +116,5 @@ public class User {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+    
 }
