@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -92,4 +91,21 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(NoteNotFoundException.class)
+    public ResponseEntity<String> handleNoteNotFoundException(
+            NoteNotFoundException ex) {
+
+        return new ResponseEntity<>(
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(DuplicateNoteException.class)
+    public ResponseEntity<String> handleDuplicateNoteException(
+            DuplicateNoteException ex) {
+
+        return new ResponseEntity<>(
+                ex.getMessage(),
+                HttpStatus.CONFLICT);
+    }
+    
 }
