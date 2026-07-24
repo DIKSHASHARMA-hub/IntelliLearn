@@ -21,26 +21,52 @@ public class AiService {
 
     public String generateQuiz(String pdfText) {
 
-        String prompt = """
-                Generate exactly 10 multiple-choice questions from the following text.
+    	String prompt = """
+    			Generate exactly 10 multiple-choice questions from the following study material.
 
-                Return ONLY valid JSON.
+    			IMPORTANT RULES:
 
-                Format:
+    			1. Each question must have exactly four options:
+    			   - optionA
+    			   - optionB
+    			   - optionC
+    			   - optionD
 
-                [
-                  {
-                    "question":"",
-                    "optionA":"",
-                    "optionB":"",
-                    "optionC":"",
-                    "optionD":"",
-                    "correctAnswer":""
-                  }
-                ]
+    			2. The "correctAnswer" field MUST contain ONLY the option LETTER:
+    			   "A", "B", "C", or "D".
 
-                Text:
-                """ + pdfText;
+    			3. NEVER return the answer text.
+
+    			Correct example:
+
+    			{
+    			  "question": "Which servlet is the heart of Spring MVC?",
+    			  "optionA": "LoginServlet",
+    			  "optionB": "DispatcherServlet",
+    			  "optionC": "ContextServlet",
+    			  "optionD": "HttpServlet",
+    			  "correctAnswer": "B"
+    			}
+
+    			Wrong example:
+
+    			{
+    			  "question": "Which servlet is the heart of Spring MVC?",
+    			  "optionA": "LoginServlet",
+    			  "optionB": "DispatcherServlet",
+    			  "optionC": "ContextServlet",
+    			  "optionD": "HttpServlet",
+    			  "correctAnswer": "DispatcherServlet"
+    			}
+
+    			4. Return ONLY a valid JSON array.
+    			5. Do NOT use markdown.
+    			6. Do NOT add explanations.
+    			7. Do NOT wrap the JSON in ```json blocks.
+
+    			Study Material:
+
+    			""" + pdfText;
 
         Map<String, Object> body = Map.of(
                 "contents",
