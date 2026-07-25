@@ -1,6 +1,7 @@
 package com.intellilearn.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import com.intellilearn.dto.request.LoginRequest;
@@ -13,6 +14,7 @@ import com.intellilearn.exception.InvalidCredentialsException;
 import com.intellilearn.repository.RoleRepository;
 import com.intellilearn.repository.UserRepository;
 import com.intellilearn.service.interfaces.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -22,6 +24,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RoleRepository roleRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -30,15 +35,25 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException("Email already exists.");
         }
 
-        Role role = roleRepository.findByName("STUDENT")
-                .orElseThrow(() -> new RuntimeException("Default role not found."));
+        String roleName = request.getRole().toUpperCase();
+
+        
+        if (!roleName.equals("STUDENT") && !roleName.equals("TEACHER")) {
+            throw new RuntimeException("Role must be STUDENT or TEACHER.");
+        }
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found."));
 
         User user = new User();
 
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword()); // Later use BCryptPasswordEncoder
+
+        
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
         user.setPhone(request.getPhone());
         user.setRole(role);
 
@@ -61,7 +76,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
 
-        if (!user.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid email or password.");
         }
 
