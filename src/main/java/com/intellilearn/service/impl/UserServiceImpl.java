@@ -13,6 +13,7 @@ import com.intellilearn.exception.EmailAlreadyExistsException;
 import com.intellilearn.exception.InvalidCredentialsException;
 import com.intellilearn.repository.RoleRepository;
 import com.intellilearn.repository.UserRepository;
+import com.intellilearn.security.jwt.JwtUtil;
 import com.intellilearn.service.interfaces.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -27,6 +28,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -66,6 +70,7 @@ public class UserServiceImpl implements UserService {
         response.setEmail(savedUser.getEmail());
         response.setPhone(savedUser.getPhone());
         response.setRole(savedUser.getRole().getName());
+        response.setToken(jwtUtil.generateToken(savedUser));
 
         return response;
     }
@@ -87,6 +92,7 @@ public class UserServiceImpl implements UserService {
         response.setEmail(user.getEmail());
         response.setPhone(user.getPhone());
         response.setRole(user.getRole().getName());
+        response.setToken(jwtUtil.generateToken(user));
 
         return response;
     }

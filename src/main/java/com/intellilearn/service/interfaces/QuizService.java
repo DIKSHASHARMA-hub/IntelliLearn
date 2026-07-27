@@ -8,4 +8,6 @@ public interface QuizService {
 
     QuizResponseDTO getQuiz(Long quizId);
 
+    QuizResponseDTO getQuizBySubject(Long subjectId);
+
 }

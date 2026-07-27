@@ -21,6 +21,7 @@ import com.intellilearn.repository.QuestionRepository;
 import com.intellilearn.repository.QuizAttemptRepository;
 import com.intellilearn.repository.QuizRepository;
 import com.intellilearn.repository.UserRepository;
+import com.intellilearn.security.service.SecurityUtils;
 import com.intellilearn.service.interfaces.QuizAttemptService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -34,25 +35,30 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     private final QuestionRepository questionRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final AttemptAnswerRepository attemptAnswerRepository;
+    private final SecurityUtils securityUtils;
 
     public QuizAttemptServiceImpl(UserRepository userRepository,
                                   QuizRepository quizRepository,
                                   QuestionRepository questionRepository,
                                   QuizAttemptRepository quizAttemptRepository,
-                                  AttemptAnswerRepository attemptAnswerRepository) {
+                                  AttemptAnswerRepository attemptAnswerRepository,
+                                  SecurityUtils securityUtils) {
 
         this.userRepository = userRepository;
         this.quizRepository = quizRepository;
         this.questionRepository = questionRepository;
         this.quizAttemptRepository = quizAttemptRepository;
         this.attemptAnswerRepository = attemptAnswerRepository;
+        this.securityUtils = securityUtils;
     }
 
     @Override
     public QuizAttemptResponse submitQuiz(QuizSubmissionRequest request) {
 
-        User student = userRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new EntityNotFoundException("Student not found"));
+        // The student is the authenticated user making the call, never the
+        // client-supplied studentId in the request body — otherwise any
+        // signed-in student could submit attempts on someone else's behalf.
+        User student = securityUtils.getCurrentUser();
 
         Quiz quiz = quizRepository.findById(request.getQuizId())
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));

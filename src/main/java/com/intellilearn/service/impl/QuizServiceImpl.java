@@ -179,4 +179,26 @@ public class QuizServiceImpl implements QuizService {
                     questionDTOList
             );
         }
+
+        @Override
+        public QuizResponseDTO getQuizBySubject(Long subjectId) {
+
+            Subject subject = subjectRepository.findById(subjectId)
+                    .orElseThrow(() ->
+                            new RuntimeException("Subject not found."));
+
+            List<Quiz> quizzes = quizRepository.findBySubject(subject);
+
+            if (quizzes.isEmpty()) {
+                throw new RuntimeException("No quiz has been generated for this subject yet.");
+            }
+
+            // A subject can have more than one generated quiz (each "Generate"
+            // click creates a new one); the most recent one has the highest id.
+            Quiz latestQuiz = quizzes.stream()
+                    .max((a, b) -> Long.compare(a.getId(), b.getId()))
+                    .orElseThrow();
+
+            return getQuiz(latestQuiz.getId());
+        }
             }

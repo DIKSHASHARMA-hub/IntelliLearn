@@ -42,4 +42,17 @@ public class QuizController {
         return ResponseEntity.ok(quiz);
     }
 
+    /**
+     * Find the (most recently generated) quiz for a subject — used by
+     * students browsing subjects who don't already know a quizId.
+     */
+    @GetMapping("/subject/{subjectId}")
+    public ResponseEntity<QuizResponseDTO> getQuizBySubject(
+            @PathVariable Long subjectId) {
+
+        QuizResponseDTO quiz = quizService.getQuizBySubject(subjectId);
+
+        return ResponseEntity.ok(quiz);
+    }
+
 }

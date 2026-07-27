@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard · IntelliLearn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/auth.css}" href="/css/auth.css">
+  <link rel="stylesheet" th:href="@{/css/dashboard.css}" href="/css/dashboard.css">
+  <style>body { background: var(--paper); }</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="brand-mark">IntelliLearn</span>
+    <div class="user-info">
+      <span><strong id="userName">—</strong> · Student</span>
+      <button class="logout-btn" onclick="ilLogout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="dash-shell">
+
+    <!-- ===== Browse view ===== -->
+    <div class="sd-view" id="view-browse">
+      <p class="eyebrow">Your progress</p>
+      <div class="stats-row" id="statsRow">
+        <p class="empty-hint">Loading…</p>
+      </div>
+
+      <h2 class="section-title">Recent attempts</h2>
+      <div id="recentAttempts" style="margin-bottom:32px;">
+        <p class="empty-hint">Loading…</p>
+      </div>
+
+      <h2 class="section-title">Subjects</h2>
+      <div id="subjectPickList">
+        <p class="empty-hint">Loading subjects…</p>
+      </div>
+    </div>
+
+    <!-- ===== Quiz-taking view ===== -->
+    <div class="sd-view" id="view-quiz" style="display:none;">
+      <div class="quiz-runner-header">
+        <div>
+          <p class="eyebrow">Quiz</p>
+          <h1 id="quizRunnerTitle" style="font-family: var(--font-display); font-size: 26px; font-weight: 500; margin:0;">—</h1>
+        </div>
+        <button class="ghost-btn" onclick="backToBrowse()">Cancel</button>
+      </div>
+
+      <div id="quizQuestions"></div>
+
+      <button class="primary-btn" id="submitQuizBtn" onclick="submitQuiz()" style="margin-top: 8px;">
+        Submit quiz
+      </button>
+    </div>
+
+    <!-- ===== Result view ===== -->
+    <div class="sd-view" id="view-result" style="display:none;">
+      <div class="result-hero">
+        <p class="score-big" id="resultScore">—</p>
+        <p class="score-sub" id="resultSub">—</p>
+      </div>
+
+      <h2 class="section-title">Review</h2>
+      <div id="resultReview"></div>
+
+      <button class="primary-btn" style="margin-top:16px;" onclick="backToBrowse()">Back to subjects</button>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
+  <script th:src="@{/js/common.js}" src="/js/common.js"></script>
+  <script th:src="@{/js/student-dashboard.js}" src="/js/student-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard · IntelliLearn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/auth.css}" href="/css/auth.css">
+  <link rel="stylesheet" th:href="@{/css/dashboard.css}" href="/css/dashboard.css">
+  <style>body { background: var(--paper); }</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="brand-mark">IntelliLearn</span>
+    <div class="user-info">
+      <span><strong id="userName">—</strong> · Teacher</span>
+      <button class="logout-btn" onclick="ilLogout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="dash-shell">
+    <div class="dash-header">
+      <div>
+        <p class="eyebrow">Teacher workspace</p>
+        <h1>Your subjects</h1>
+      </div>
+      <button class="primary-btn" id="showCreateFormBtn">+ New subject</button>
+    </div>
+
+    <div class="inline-form" id="newSubjectForm">
+      <div class="field-row">
+        <input type="text" id="newSubjectName" placeholder="Subject name (e.g. Java)">
+        <input type="text" id="newSubjectDesc" placeholder="Description (optional)">
+      </div>
+      <button class="primary-btn" id="createSubjectBtn">Create subject</button>
+    </div>
+
+    <div id="subjectList">
+      <p class="empty-hint">Loading subjects…</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
+  <script th:src="@{/js/common.js}" src="/js/common.js"></script>
+  <script th:src="@{/js/dashboard.js}" src="/js/dashboard.js"></script>
+</body>
+</html>

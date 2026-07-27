@@ -84,7 +84,6 @@ public class AiService {
         HttpEntity<Map<String, Object>> request =
                 new HttpEntity<>(body, headers);
         
-        System.out.println("API URL: " + apiUrl + "?key=" + apiKey);
         String response = restTemplate.postForObject(
                 apiUrl + "?key=" + apiKey,
                 request,

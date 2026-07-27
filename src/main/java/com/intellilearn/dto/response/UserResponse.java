@@ -8,6 +8,7 @@ public class UserResponse {
     private String email;
     private String phone;
     private String role;
+    private String token;
 	public Long getId() {
 		return id;
 	}
@@ -43,6 +44,12 @@ public class UserResponse {
 	}
 	public void setRole(String role) {
 		this.role = role;
+	}
+	public String getToken() {
+		return token;
+	}
+	public void setToken(String token) {
+		this.token = token;
 	}
 
     

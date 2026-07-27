@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create account · IntelliLearn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/auth.css}" href="/css/auth.css">
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-card">
+
+      <div class="ink-panel">
+        <div class="brand-mark">IntelliLearn</div>
+        <h1>
+          Two roles.<br>
+          <span class="highlight-word" id="rotatingWord">One</span> system.
+        </h1>
+        <p class="sub">Teachers upload notes and let AI write the quiz. Students practice, get scored instantly, and track improvement over time.</p>
+
+        <div class="quiz-chips">
+          <span class="quiz-chip">TEACHER · upload &amp; generate</span>
+          <span class="quiz-chip">STUDENT · practice &amp; track</span>
+        </div>
+      </div>
+
+      <div class="form-panel">
+        <p class="form-eyebrow">Get started</p>
+        <h2>Create your account</h2>
+        <p class="lead">Tell us who you are and we'll set up the right dashboard.</p>
+
+        <div class="form-message" id="formMessage"></div>
+
+        <form id="registerForm" onsubmit="return false;">
+
+          <div class="role-toggle">
+            <label class="role-option">
+              <input type="radio" name="role" value="TEACHER" checked>
+              <div class="role-card">I'm a Teacher</div>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="role" value="STUDENT">
+              <div class="role-card">I'm a Student</div>
+            </label>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="firstName">First name</label>
+              <input type="text" id="firstName" placeholder="Anita" required>
+            </div>
+            <div class="field">
+              <label for="lastName">Last name</label>
+              <input type="text" id="lastName" placeholder="Sharma" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="you@example.com" required>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" placeholder="9999999999" required>
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">Create account</button>
+        </form>
+
+        <p class="switch-link">Already have an account? <a th:href="@{/login}" href="/login">Log in</a></p>
+      </div>
+
+    </div>
+  </div>
+
+  <script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
+  <script>
+    const words = ['One', 'Every'];
+    let wIndex = 0;
+    const wordEl = document.getElementById('rotatingWord');
+    setInterval(() => {
+      wIndex = (wIndex + 1) % words.length;
+      wordEl.style.animation = 'none';
+      wordEl.textContent = words[wIndex];
+      void wordEl.offsetWidth;
+      wordEl.style.animation = '';
+    }, 3600);
+
+    const form = document.getElementById('registerForm');
+    const messageEl = document.getElementById('formMessage');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', () => {
+      const role = document.querySelector('input[name="role"]:checked').value;
+      const payload = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        password: document.getElementById('password').value,
+        role: role
+      };
+      ilSubmitForm('/api/users/register', payload, messageEl, submitBtn);
+    });
+  </script>
+</body>
+</html>
