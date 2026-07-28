@@ -13,4 +13,6 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     List<Quiz> findBySubject(Subject subject);
 
+    List<Quiz> findByNotesId(Long notesId);
+
 }

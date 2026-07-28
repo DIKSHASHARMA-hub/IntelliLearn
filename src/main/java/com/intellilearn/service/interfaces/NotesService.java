@@ -1,6 +1,7 @@
 package com.intellilearn.service.interfaces;
 
-import com.intellilearn.dto.request.NotesRequest;
+import java.util.List;
+
 import com.intellilearn.dto.response.NotesResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,10 +12,13 @@ public interface NotesService {
             String title,
             MultipartFile file);
 
-    NotesResponse getNotesBySubject(Long subjectId);
+    List<NotesResponse> getNotesBySubject(Long subjectId);
 
-    Resource downloadNotes(Long subjectId);
+    Resource downloadNotes(Long noteId);
 
-    void deleteNotes(Long subjectId);
+    void deleteNotes(Long noteId);
+
+    /** Used when a whole subject is deleted, to clean up all of its notes (rows + files). */
+    void deleteAllNotesForSubject(Long subjectId);
 
 }

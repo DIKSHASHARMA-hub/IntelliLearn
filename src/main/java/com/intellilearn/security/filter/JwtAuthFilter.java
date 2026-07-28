@@ -2,6 +2,8 @@ package com.intellilearn.security.filter;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +21,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
@@ -46,8 +50,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = authHeader.substring(BEARER_PREFIX.length());
 
         try {
-            if (jwtUtil.isTokenValid(token)
-                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (!jwtUtil.isTokenValid(token)) {
+                log.warn("JWT rejected as invalid/expired for request {} {}",
+                        request.getMethod(), request.getRequestURI());
+            } else if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 String email = jwtUtil.extractEmail(token);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -63,7 +69,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             // Invalid/expired token or unknown user: leave the context unauthenticated
             // so the request is rejected downstream by the access rules, instead of
-            // failing the whole request here.
+            // failing the whole request here. Logged so the real cause is visible
+            // instead of just a generic 401 with no explanation.
+            log.warn("JWT authentication failed for request {} {}: {}",
+                    request.getMethod(), request.getRequestURI(), e.toString());
             SecurityContextHolder.clearContext();
         }
 

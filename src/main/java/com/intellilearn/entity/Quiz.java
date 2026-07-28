@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.intellilearn.entity.Subject;
+import com.intellilearn.entity.Notes;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -29,6 +30,10 @@ public class Quiz {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", nullable = false)
     private Subject subject;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "notes_id")
+    private Notes notes;
 
     @OneToMany(mappedBy = "quiz",
             cascade = CascadeType.ALL,
@@ -67,6 +72,14 @@ public class Quiz {
 
     public void setSubject(Subject subject) {
         this.subject = subject;
+    }
+
+    public Notes getNotes() {
+        return notes;
+    }
+
+    public void setNotes(Notes notes) {
+        this.notes = notes;
     }
 
     public List<Question> getQuestions() {

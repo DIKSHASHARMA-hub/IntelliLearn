@@ -11,6 +11,9 @@ import com.intellilearn.entity.Notes;
 import com.intellilearn.entity.Question;
 import com.intellilearn.entity.Quiz;
 import com.intellilearn.entity.Subject;
+import com.intellilearn.exception.NoteNotFoundException;
+import com.intellilearn.exception.QuizGenerationException;
+import com.intellilearn.exception.SubjectNotFoundException;
 import com.intellilearn.repository.NotesRepository;
 import com.intellilearn.repository.QuestionRepository;
 import com.intellilearn.repository.QuizRepository;
@@ -21,6 +24,7 @@ import com.intellilearn.util.PdfReaderUtil;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+
 @Service
 public class QuizServiceImpl implements QuizService {
 
@@ -54,112 +58,72 @@ public class QuizServiceImpl implements QuizService {
         this.aiService = aiService;
         this.objectMapper = new ObjectMapper();
     }
-    @Override
-    public QuizResponseDTO generateQuiz(Long subjectId) {
 
-        Subject subject = subjectRepository.findById(subjectId)
+    @Override
+    public QuizResponseDTO generateQuizForNote(Long noteId) {
+
+        Notes notes = notesRepository.findById(noteId)
                 .orElseThrow(() ->
-                        new RuntimeException("Subject not found."));
-        Notes notes = notesRepository.findBySubjectId(subjectId)
-                .orElseThrow(() ->
-                        new RuntimeException("Notes not found."));
-        String pdfText =
-                pdfReaderUtil.extractText(notes.getFilePath());
-        String aiResponse =
-                aiService.generateQuiz(pdfText);
+                        new NoteNotFoundException("Notes not found."));
+
+        String pdfText = pdfReaderUtil.extractText(notes.getFilePath());
+
+        String aiResponse = aiService.generateQuiz(pdfText);
+
         Quiz quiz = new Quiz();
 
-        quiz.setTitle(subject.getName() + " Quiz");
-
-        quiz.setSubject(subject);
+        quiz.setTitle(notes.getTitle() + " Quiz");
+        quiz.setSubject(notes.getSubject());
+        quiz.setNotes(notes);
 
         quiz = quizRepository.save(quiz);
-        List<QuestionDTO> questionDTOList =
-                new ArrayList<>();
-        
 
-        	try {
+        List<QuestionDTO> questionDTOList = parseQuestionsIntoQuiz(aiResponse, quiz);
 
-        	    JsonNode rootNode = objectMapper.readTree(aiResponse);
+        return new QuizResponseDTO(
+                quiz.getId(),
+                quiz.getTitle(),
+                questionDTOList
+        );
+    }
 
-        	    String generatedJson = rootNode
-        	            .path("candidates")
-        	            .get(0)
-        	            .path("content")
-        	            .path("parts")
-        	            .get(0)
-        	            .path("text")
-        	            .asText();
-        	    generatedJson = generatedJson
-        	            .replace("```json", "")
-        	            .replace("```", "")
-        	            .trim();
+    private List<QuestionDTO> parseQuestionsIntoQuiz(String aiResponse, Quiz quiz) {
 
-        	    JsonNode questionsNode = objectMapper.readTree(generatedJson);
+        List<QuestionDTO> questionDTOList = new ArrayList<>();
 
-        	    for (JsonNode node : questionsNode) {
+        try {
 
-        	        Question question = new Question();
+            JsonNode rootNode = objectMapper.readTree(aiResponse);
 
-        	        question.setQuestion(node.get("question").asText());
+            String generatedJson = rootNode
+                    .path("candidates")
+                    .get(0)
+                    .path("content")
+                    .path("parts")
+                    .get(0)
+                    .path("text")
+                    .asText();
 
-        	        question.setOptionA(node.get("optionA").asText());
+            generatedJson = generatedJson
+                    .replace("```json", "")
+                    .replace("```", "")
+                    .trim();
 
-        	        question.setOptionB(node.get("optionB").asText());
+            JsonNode questionsNode = objectMapper.readTree(generatedJson);
 
-        	        question.setOptionC(node.get("optionC").asText());
+            for (JsonNode node : questionsNode) {
 
-        	        question.setOptionD(node.get("optionD").asText());
+                Question question = new Question();
 
-        	        question.setCorrectAnswer(node.get("correctAnswer").asText());
+                question.setQuestion(node.get("question").asText());
+                question.setOptionA(node.get("optionA").asText());
+                question.setOptionB(node.get("optionB").asText());
+                question.setOptionC(node.get("optionC").asText());
+                question.setOptionD(node.get("optionD").asText());
+                question.setCorrectAnswer(node.get("correctAnswer").asText());
+                question.setQuiz(quiz);
 
-        	        question.setQuiz(quiz);
-
-        	        question = questionRepository.save(question);
-
-        	        QuestionDTO dto = new QuestionDTO();
-
-        	        dto.setQuestionId(question.getId());
-
-        	        dto.setQuestion(question.getQuestion());
-
-        	        dto.setOptionA(question.getOptionA());
-
-        	        dto.setOptionB(question.getOptionB());
-
-        	        dto.setOptionC(question.getOptionC());
-
-        	        dto.setOptionD(question.getOptionD());
-
-        	        questionDTOList.add(dto);
-        	    }
-
-        	} catch (Exception e) {
-
-        	    throw new RuntimeException("Error while parsing Gemini response.", e);
-
-        	}            
-        	return new QuizResponseDTO(
-
-                    quiz.getId(),
-
-                    quiz.getTitle(),
-
-                    questionDTOList
-            );
-        }
-        @Override
-        public QuizResponseDTO getQuiz(Long quizId) {
-
-            Quiz quiz = quizRepository.findById(quizId)
-                    .orElseThrow(() ->
-                            new RuntimeException("Quiz not found."));
-
-            List<Question> questions = questionRepository.findByQuiz(quiz);
-
-            List<QuestionDTO> questionDTOList = new ArrayList<>();
-
-            for (Question question : questions) {
+                question = questionRepository.save(question);
 
                 QuestionDTO dto = new QuestionDTO();
 
@@ -173,32 +137,84 @@ public class QuizServiceImpl implements QuizService {
                 questionDTOList.add(dto);
             }
 
-            return new QuizResponseDTO(
-                    quiz.getId(),
-                    quiz.getTitle(),
-                    questionDTOList
-            );
+        } catch (Exception e) {
+            throw new QuizGenerationException("Error while parsing the AI-generated quiz response.", e);
         }
 
-        @Override
-        public QuizResponseDTO getQuizBySubject(Long subjectId) {
+        return questionDTOList;
+    }
 
-            Subject subject = subjectRepository.findById(subjectId)
-                    .orElseThrow(() ->
-                            new RuntimeException("Subject not found."));
+    @Override
+    public QuizResponseDTO getQuiz(Long quizId) {
 
-            List<Quiz> quizzes = quizRepository.findBySubject(subject);
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() ->
+                        new jakarta.persistence.EntityNotFoundException("Quiz not found."));
 
-            if (quizzes.isEmpty()) {
-                throw new RuntimeException("No quiz has been generated for this subject yet.");
-            }
+        List<Question> questions = questionRepository.findByQuiz(quiz);
 
-            // A subject can have more than one generated quiz (each "Generate"
-            // click creates a new one); the most recent one has the highest id.
-            Quiz latestQuiz = quizzes.stream()
-                    .max((a, b) -> Long.compare(a.getId(), b.getId()))
-                    .orElseThrow();
+        List<QuestionDTO> questionDTOList = new ArrayList<>();
 
-            return getQuiz(latestQuiz.getId());
+        for (Question question : questions) {
+
+            QuestionDTO dto = new QuestionDTO();
+
+            dto.setQuestionId(question.getId());
+            dto.setQuestion(question.getQuestion());
+            dto.setOptionA(question.getOptionA());
+            dto.setOptionB(question.getOptionB());
+            dto.setOptionC(question.getOptionC());
+            dto.setOptionD(question.getOptionD());
+
+            questionDTOList.add(dto);
         }
-            }
+
+        return new QuizResponseDTO(
+                quiz.getId(),
+                quiz.getTitle(),
+                questionDTOList
+        );
+    }
+
+    @Override
+    public QuizResponseDTO getQuizBySubject(Long subjectId) {
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() ->
+                        new SubjectNotFoundException("Subject not found."));
+
+        List<Quiz> quizzes = quizRepository.findBySubject(subject);
+
+        if (quizzes.isEmpty()) {
+            throw new jakarta.persistence.EntityNotFoundException(
+                    "No quiz has been generated for this subject yet.");
+        }
+
+        Quiz latestQuiz = quizzes.stream()
+                .max((a, b) -> Long.compare(a.getId(), b.getId()))
+                .orElseThrow();
+
+        return getQuiz(latestQuiz.getId());
+    }
+
+    @Override
+    public QuizResponseDTO getQuizByNote(Long noteId) {
+
+        if (!notesRepository.existsById(noteId)) {
+            throw new NoteNotFoundException("Notes not found.");
+        }
+
+        List<Quiz> quizzes = quizRepository.findByNotesId(noteId);
+
+        if (quizzes.isEmpty()) {
+            throw new jakarta.persistence.EntityNotFoundException(
+                    "No quiz has been generated for these notes yet.");
+        }
+
+        Quiz latestQuiz = quizzes.stream()
+                .max((a, b) -> Long.compare(a.getId(), b.getId()))
+                .orElseThrow();
+
+        return getQuiz(latestQuiz.getId());
+    }
+}

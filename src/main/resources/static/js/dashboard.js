@@ -32,12 +32,15 @@ function renderSubjectCard(subject) {
   card.id = 'subject-' + subject.id;
 
   card.innerHTML = `
-    <div class="subject-card-head" onclick="toggleSubject(${subject.id})">
-      <div class="subject-title-group">
+    <div class="subject-card-head">
+      <div class="subject-title-group" onclick="toggleSubject(${subject.id})" style="cursor:pointer; flex:1;">
         <h3>${escapeHtml(subject.name)}</h3>
         <p>${subject.description ? escapeHtml(subject.description) : 'No description'}</p>
       </div>
-      <span class="chevron">&#9656;</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="ghost-btn" onclick="event.stopPropagation(); deleteSubject(${subject.id}, '${escapeHtml(subject.name)}')">Delete</button>
+        <span class="chevron" onclick="toggleSubject(${subject.id})" style="cursor:pointer;">&#9656;</span>
+      </div>
     </div>
     <div class="subject-body">
       <div class="subject-section">
@@ -98,7 +101,27 @@ async function createSubject() {
   loadSubjects();
 }
 
-// ---------- Notes ----------
+async function deleteSubject(subjectId, subjectName) {
+  const confirmed = confirm(
+    'Delete "' + subjectName + '"? This also removes all of its notes, ' +
+    'generated quizzes, and any student attempts on those quizzes. This cannot be undone.'
+  );
+  if (!confirmed) return;
+
+  const res = await ilAuthFetch('/subjects/' + subjectId, { method: 'DELETE' });
+  if (!res) return;
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    ilToast(err.message || 'Could not delete subject', true);
+    return;
+  }
+
+  ilToast('Subject deleted');
+  loadSubjects();
+}
+
+// ---------- Notes (a subject can have multiple) ----------
 
 async function loadNotesForSubject(subjectId) {
   const container = document.getElementById('notes-' + subjectId);
@@ -107,41 +130,27 @@ async function loadNotesForSubject(subjectId) {
 
   if (!res.ok) {
     container.innerHTML = '<p class="empty-hint">No notes uploaded yet.</p>';
-    setUploadFormEnabled(subjectId, true);
     return;
   }
 
-  const note = await res.json().catch(() => null);
-  if (!note || !note.id) {
+  const notes = await res.json().catch(() => []);
+  if (!notes || !notes.length) {
     container.innerHTML = '<p class="empty-hint">No notes uploaded yet.</p>';
-    setUploadFormEnabled(subjectId, true);
     return;
   }
 
-  container.innerHTML = `
+  container.innerHTML = notes.map(note => `
     <div class="note-row">
       <span>${escapeHtml(note.title)} <span class="empty-hint">(${escapeHtml(note.fileName)})</span></span>
-      <button class="ghost-btn" onclick="deleteNotes(${subjectId})">Remove</button>
+      <button class="ghost-btn" onclick="deleteNotes(${subjectId}, ${note.id})">Remove</button>
     </div>
-    <p class="empty-hint" style="margin-top:8px;">Only one PDF per subject — remove this one to upload a replacement.</p>
-  `;
-  setUploadFormEnabled(subjectId, false);
+  `).join('');
 }
 
-function setUploadFormEnabled(subjectId, enabled) {
-  const titleInput = document.getElementById('noteTitle-' + subjectId);
-  const fileInput = document.getElementById('noteFile-' + subjectId);
-  if (!titleInput || !fileInput) return;
-  titleInput.style.display = enabled ? '' : 'none';
-  fileInput.style.display = enabled ? '' : 'none';
-  const uploadBtn = fileInput.parentElement.querySelector('.ghost-btn');
-  if (uploadBtn) uploadBtn.style.display = enabled ? '' : 'none';
-}
+async function deleteNotes(subjectId, noteId) {
+  if (!confirm('Remove this PDF?')) return;
 
-async function deleteNotes(subjectId) {
-  if (!confirm('Remove the current PDF for this subject?')) return;
-
-  const res = await ilAuthFetch('/notes/subject/' + subjectId, { method: 'DELETE' });
+  const res = await ilAuthFetch('/notes/' + noteId, { method: 'DELETE' });
   if (!res) return;
 
   if (!res.ok) {

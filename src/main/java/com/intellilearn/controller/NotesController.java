@@ -1,5 +1,7 @@
 package com.intellilearn.controller;
 
+import java.util.List;
+
 import com.intellilearn.dto.response.NotesResponse;
 import com.intellilearn.service.interfaces.NotesService;
 import org.springframework.core.io.Resource;
@@ -33,20 +35,24 @@ public class NotesController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    /**
+     * A subject can have multiple notes uploaded to it, so this returns all
+     * of them rather than a single note.
+     */
     @GetMapping("/subject/{subjectId}")
-    public ResponseEntity<NotesResponse> getNotesBySubject(
+    public ResponseEntity<List<NotesResponse>> getNotesBySubject(
             @PathVariable Long subjectId) {
 
         return ResponseEntity.ok(
                 notesService.getNotesBySubject(subjectId));
     }
 
-    @GetMapping("/download/{subjectId}")
+    @GetMapping("/{noteId}/download")
     public ResponseEntity<Resource> downloadNotes(
-            @PathVariable Long subjectId) {
+            @PathVariable Long noteId) {
 
         Resource resource =
-                notesService.downloadNotes(subjectId);
+                notesService.downloadNotes(noteId);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
@@ -56,11 +62,11 @@ public class NotesController {
                 .body(resource);
     }
 
-    @DeleteMapping("/subject/{subjectId}")
+    @DeleteMapping("/{noteId}")
     public ResponseEntity<String> deleteNotes(
-            @PathVariable Long subjectId) {
+            @PathVariable Long noteId) {
 
-        notesService.deleteNotes(subjectId);
+        notesService.deleteNotes(noteId);
 
         return ResponseEntity.ok("Notes deleted successfully.");
     }

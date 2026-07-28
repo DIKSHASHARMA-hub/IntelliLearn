@@ -24,8 +24,8 @@ public class Notes {
     @Column(nullable = false)
     private LocalDate uploadDate;
 
-    @OneToOne
-    @JoinColumn(name = "subject_id", nullable = false, unique = true)
+    @ManyToOne
+    @JoinColumn(name = "subject_id", nullable = false)
     private Subject subject;
 
     public Notes() {

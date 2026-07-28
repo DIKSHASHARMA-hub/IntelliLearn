@@ -131,4 +131,28 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<Map<String, Object>> handleFileStorageException(
+            FileStorageException ex) {
+
+        Map<String, Object> error = new HashMap<>();
+
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        error.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @ExceptionHandler(QuizGenerationException.class)
+    public ResponseEntity<Map<String, Object>> handleQuizGenerationException(
+            QuizGenerationException ex) {
+
+        Map<String, Object> error = new HashMap<>();
+
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", HttpStatus.BAD_GATEWAY.value());
+        error.put("message", "Quiz generation failed — the AI service returned an unexpected response. Please try again.");
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+    }
 }

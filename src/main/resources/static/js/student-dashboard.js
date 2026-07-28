@@ -82,12 +82,11 @@ async function loadSubjects() {
 
   list.innerHTML = subjects.map(s => `
     <div class="subject-pick-row">
-      <div>
+      <div style="width:100%;">
         <h3>${escapeHtml(s.name)}</h3>
         <p>${s.description ? escapeHtml(s.description) : 'No description'}</p>
         <div id="notesInfo-${s.id}" style="margin-top:8px;"><p class="empty-hint">Checking notes…</p></div>
       </div>
-      <button class="primary-btn" onclick="generateAndTakeQuiz(${s.id})" id="genBtn-${s.id}">Generate quiz</button>
     </div>
   `).join('');
 
@@ -104,21 +103,26 @@ async function loadNotesPreview(subjectId) {
     return;
   }
 
-  const note = await res.json().catch(() => null);
-  if (!note || !note.id) {
+  const notes = await res.json().catch(() => []);
+  if (!notes || !notes.length) {
     container.innerHTML = '<p class="empty-hint">No notes uploaded for this subject yet.</p>';
     return;
   }
 
-  container.innerHTML = `
-    <span class="score-pill" style="cursor:pointer;" onclick="downloadNotes(${subjectId}, '${escapeHtml(note.fileName)}')">
-      &#8595; ${escapeHtml(note.title)}
-    </span>
-  `;
+  container.innerHTML = notes.map(note => `
+    <div class="note-line" style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;">
+      <span class="score-pill" style="cursor:pointer;" onclick="downloadNotes(${note.id}, '${escapeHtml(note.fileName)}')">
+        &#8595; ${escapeHtml(note.title)}
+      </span>
+      <button class="primary-btn" style="padding:7px 12px; font-size:12px;" onclick="generateAndTakeQuiz(${note.id})" id="genBtn-${note.id}">
+        Generate quiz
+      </button>
+    </div>
+  `).join('');
 }
 
-async function downloadNotes(subjectId, fileName) {
-  const res = await ilAuthFetch('/notes/download/' + subjectId, { method: 'GET' });
+async function downloadNotes(noteId, fileName) {
+  const res = await ilAuthFetch('/notes/' + noteId + '/download', { method: 'GET' });
   if (!res) return;
 
   if (!res.ok) {
@@ -139,12 +143,12 @@ async function downloadNotes(subjectId, fileName) {
 
 // ---------- Taking a quiz ----------
 
-async function generateAndTakeQuiz(subjectId) {
-  const btn = document.getElementById('genBtn-' + subjectId);
+async function generateAndTakeQuiz(noteId) {
+  const btn = document.getElementById('genBtn-' + noteId);
   btn.disabled = true;
-  btn.textContent = 'Generating with AI…';
+  btn.textContent = 'Generating…';
 
-  const res = await ilAuthFetch('/quiz/generate/' + subjectId, { method: 'POST' });
+  const res = await ilAuthFetch('/quiz/generate/note/' + noteId, { method: 'POST' });
 
   btn.disabled = false;
   btn.textContent = 'Generate quiz';
@@ -153,7 +157,7 @@ async function generateAndTakeQuiz(subjectId) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    ilToast(err.message || 'Quiz generation failed — this subject may not have notes uploaded yet', true);
+    ilToast(err.message || 'Quiz generation failed', true);
     return;
   }
 
