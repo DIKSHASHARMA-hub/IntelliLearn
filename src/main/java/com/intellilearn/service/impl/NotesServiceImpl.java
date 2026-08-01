@@ -4,16 +4,19 @@ import com.intellilearn.dto.response.NotesResponse;
 import com.intellilearn.entity.Notes;
 import com.intellilearn.entity.Quiz;
 import com.intellilearn.entity.Subject;
+import com.intellilearn.entity.User;
 import com.intellilearn.exception.FileStorageException;
 import com.intellilearn.exception.NoteNotFoundException;
 import com.intellilearn.exception.SubjectNotFoundException;
 import com.intellilearn.repository.NotesRepository;
 import com.intellilearn.repository.QuizRepository;
 import com.intellilearn.repository.SubjectRepository;
+import com.intellilearn.security.service.SecurityUtils;
 import com.intellilearn.service.interfaces.NotesService;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +38,7 @@ public class NotesServiceImpl implements NotesService {
     private final NotesRepository notesRepository;
     private final SubjectRepository subjectRepository;
     private final QuizRepository quizRepository;
+    private final SecurityUtils securityUtils;
 
     private final Path uploadPath = Paths.get("uploads");
 
@@ -46,8 +50,10 @@ public class NotesServiceImpl implements NotesService {
 
     public NotesServiceImpl(NotesRepository notesRepository,
                             SubjectRepository subjectRepository,
-                            QuizRepository quizRepository) {
+                            QuizRepository quizRepository,
+                            SecurityUtils securityUtils) {
         this.quizRepository = quizRepository;
+        this.securityUtils = securityUtils;
 
         this.notesRepository = notesRepository;
         this.subjectRepository = subjectRepository;
@@ -107,6 +113,7 @@ public class NotesServiceImpl implements NotesService {
             notes.setFilePath(filePath.toString());
             notes.setUploadDate(LocalDate.now());
             notes.setSubject(subject);
+            notes.setUploadedBy(securityUtils.getCurrentUser());
 
             Notes savedNotes = notesRepository.save(notes);
 
@@ -161,12 +168,23 @@ public class NotesServiceImpl implements NotesService {
                 .orElseThrow(() ->
                         new NoteNotFoundException("Notes not found."));
 
+        // Only the teacher who uploaded a note may remove it. Notes uploaded
+        // before this check existed have no recorded uploader (null) — those
+        // stay removable by any teacher rather than becoming permanently stuck.
+        User uploader = notes.getUploadedBy();
+        if (uploader != null && !uploader.getId().equals(securityUtils.getCurrentUser().getId())) {
+            throw new AccessDeniedException("You can only remove notes you uploaded yourself.");
+        }
+
         deleteFileAndRow(notes);
     }
 
     @Override
     public void deleteAllNotesForSubject(Long subjectId) {
 
+        // Used internally when a whole subject is deleted — ownership of the
+        // subject itself is already verified by the caller (SubjectServiceImpl),
+        // so this intentionally does not re-check per-note ownership.
         List<Notes> notes = notesRepository.findBySubjectId(subjectId);
 
         for (Notes n : notes) {
@@ -200,7 +218,8 @@ public class NotesServiceImpl implements NotesService {
                 notes.getFileName(),
                 notes.getUploadDate(),
                 notes.getSubject().getId(),
-                notes.getSubject().getName());
+                notes.getSubject().getName(),
+                notes.getUploadedBy() != null ? notes.getUploadedBy().getId() : null);
     }
 
     /** Strips any path segments from a client-supplied filename, keeping just the base name. */

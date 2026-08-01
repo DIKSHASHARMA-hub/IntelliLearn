@@ -16,6 +16,8 @@ public class NotesResponse {
 
     private String subjectName;
 
+    private Long uploadedByUserId;
+
     public NotesResponse() {
     }
 
@@ -24,13 +26,15 @@ public class NotesResponse {
                          String fileName,
                          LocalDate uploadDate,
                          Long subjectId,
-                         String subjectName) {
+                         String subjectName,
+                         Long uploadedByUserId) {
         this.id = id;
         this.title = title;
         this.fileName = fileName;
         this.uploadDate = uploadDate;
         this.subjectId = subjectId;
         this.subjectName = subjectName;
+        this.uploadedByUserId = uploadedByUserId;
     }
 
     public Long getId() {
@@ -79,5 +83,13 @@ public class NotesResponse {
 
     public void setSubjectName(String subjectName) {
         this.subjectName = subjectName;
+    }
+
+    public Long getUploadedByUserId() {
+        return uploadedByUserId;
+    }
+
+    public void setUploadedByUserId(Long uploadedByUserId) {
+        this.uploadedByUserId = uploadedByUserId;
     }
 }

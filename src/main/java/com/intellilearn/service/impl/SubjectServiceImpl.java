@@ -7,6 +7,7 @@ import com.intellilearn.entity.Question;
 import com.intellilearn.entity.Quiz;
 import com.intellilearn.entity.QuizAttempt;
 import com.intellilearn.entity.Subject;
+import com.intellilearn.entity.User;
 import com.intellilearn.exception.DuplicateSubjectException;
 import com.intellilearn.exception.SubjectNotFoundException;
 import com.intellilearn.repository.AttemptAnswerRepository;
@@ -14,9 +15,11 @@ import com.intellilearn.repository.QuestionRepository;
 import com.intellilearn.repository.QuizAttemptRepository;
 import com.intellilearn.repository.QuizRepository;
 import com.intellilearn.repository.SubjectRepository;
+import com.intellilearn.security.service.SecurityUtils;
 import com.intellilearn.service.interfaces.NotesService;
 import com.intellilearn.service.interfaces.SubjectService;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,19 +35,22 @@ public class SubjectServiceImpl implements SubjectService {
     private final QuestionRepository questionRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final AttemptAnswerRepository attemptAnswerRepository;
+    private final SecurityUtils securityUtils;
 
     public SubjectServiceImpl(SubjectRepository subjectRepository,
                                NotesService notesService,
                                QuizRepository quizRepository,
                                QuestionRepository questionRepository,
                                QuizAttemptRepository quizAttemptRepository,
-                               AttemptAnswerRepository attemptAnswerRepository) {
+                               AttemptAnswerRepository attemptAnswerRepository,
+                               SecurityUtils securityUtils) {
         this.subjectRepository = subjectRepository;
         this.notesService = notesService;
         this.quizRepository = quizRepository;
         this.questionRepository = questionRepository;
         this.quizAttemptRepository = quizAttemptRepository;
         this.attemptAnswerRepository = attemptAnswerRepository;
+        this.securityUtils = securityUtils;
     }
 
     @Override
@@ -57,6 +63,7 @@ public class SubjectServiceImpl implements SubjectService {
         Subject subject = new Subject();
         subject.setName(request.getName());
         subject.setDescription(request.getDescription());
+        subject.setCreatedBy(securityUtils.getCurrentUser());
 
         Subject savedSubject = subjectRepository.save(subject);
 
@@ -69,6 +76,8 @@ public class SubjectServiceImpl implements SubjectService {
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() ->
                         new SubjectNotFoundException("Subject not found with id: " + id));
+
+        requireOwnership(subject);
 
         if (!subject.getName().equalsIgnoreCase(request.getName())
                 && subjectRepository.existsByName(request.getName())) {
@@ -85,10 +94,11 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     /**
-     * Deleting a subject also removes everything hanging off it — notes
-     * (rows + files on disk), quizzes, their questions, and any student
-     * attempts/answers against those quizzes — so the delete doesn't fail
-     * with a foreign-key constraint error and doesn't leave orphaned rows.
+     * Only the teacher who created a subject may delete it. Deleting also
+     * removes everything hanging off it — notes (rows + files on disk),
+     * quizzes, their questions, and any student attempts/answers against
+     * those quizzes — so the delete doesn't fail with a foreign-key
+     * constraint error and doesn't leave orphaned rows.
      */
     @Override
     @Transactional
@@ -97,6 +107,8 @@ public class SubjectServiceImpl implements SubjectService {
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() ->
                         new SubjectNotFoundException("Subject not found with id: " + id));
+
+        requireOwnership(subject);
 
         // 1. Quizzes for this subject, and everything hanging off each one —
         //    this must happen BEFORE deleting notes, since each Quiz now has
@@ -120,7 +132,10 @@ public class SubjectServiceImpl implements SubjectService {
 
         quizRepository.deleteAll(quizzes);
 
-        // 2. Notes (files + rows) — safe to remove now that no quiz references them
+        // 2. Notes (files + rows) — safe to remove now that no quiz references them.
+        //    This bypasses per-note ownership checks intentionally: ownership
+        //    of the *subject* has already been verified above, which is the
+        //    authority that matters when the whole subject is going away.
         notesService.deleteAllNotesForSubject(id);
 
         // 3. Finally, the subject itself
@@ -147,6 +162,21 @@ public class SubjectServiceImpl implements SubjectService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Only the teacher who created a subject may edit or delete it. Subjects
+     * created before this check existed have no recorded creator (null) —
+     * those stay editable by any teacher rather than becoming permanently
+     * stuck with no owner able to manage them.
+     */
+    private void requireOwnership(Subject subject) {
+        User creator = subject.getCreatedBy();
+        User currentUser = securityUtils.getCurrentUser();
+
+        if (creator != null && !creator.getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You can only manage subjects you created yourself.");
+        }
+    }
+
     private SubjectResponse mapToResponse(Subject subject) {
 
         SubjectResponse response = new SubjectResponse();
@@ -156,6 +186,8 @@ public class SubjectServiceImpl implements SubjectService {
         response.setDescription(subject.getDescription());
         response.setCreatedAt(subject.getCreatedAt());
         response.setUpdatedAt(subject.getUpdatedAt());
+        response.setCreatedByUserId(
+                subject.getCreatedBy() != null ? subject.getCreatedBy().getId() : null);
 
         return response;
     }

@@ -31,6 +31,13 @@ function renderSubjectCard(subject) {
   card.className = 'subject-card';
   card.id = 'subject-' + subject.id;
 
+  const user = ilGetUser();
+  const isOwner = subject.createdByUserId === null || subject.createdByUserId === user.id;
+
+  const deleteBtn = isOwner
+    ? `<button class="ghost-btn" onclick="event.stopPropagation(); deleteSubject(${subject.id}, '${escapeHtml(subject.name)}')">Delete</button>`
+    : '';
+
   card.innerHTML = `
     <div class="subject-card-head">
       <div class="subject-title-group" onclick="toggleSubject(${subject.id})" style="cursor:pointer; flex:1;">
@@ -38,7 +45,7 @@ function renderSubjectCard(subject) {
         <p>${subject.description ? escapeHtml(subject.description) : 'No description'}</p>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
-        <button class="ghost-btn" onclick="event.stopPropagation(); deleteSubject(${subject.id}, '${escapeHtml(subject.name)}')">Delete</button>
+        ${deleteBtn}
         <span class="chevron" onclick="toggleSubject(${subject.id})" style="cursor:pointer;">&#9656;</span>
       </div>
     </div>
@@ -139,12 +146,20 @@ async function loadNotesForSubject(subjectId) {
     return;
   }
 
-  container.innerHTML = notes.map(note => `
+  const user = ilGetUser();
+
+  container.innerHTML = notes.map(note => {
+    const isOwner = note.uploadedByUserId === null || note.uploadedByUserId === user.id;
+    const removeBtn = isOwner
+      ? `<button class="ghost-btn" onclick="deleteNotes(${subjectId}, ${note.id})">Remove</button>`
+      : '';
+    return `
     <div class="note-row">
       <span>${escapeHtml(note.title)} <span class="empty-hint">(${escapeHtml(note.fileName)})</span></span>
-      <button class="ghost-btn" onclick="deleteNotes(${subjectId}, ${note.id})">Remove</button>
+      ${removeBtn}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 async function deleteNotes(subjectId, noteId) {
