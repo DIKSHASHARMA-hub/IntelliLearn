@@ -69,6 +69,10 @@
 
     const form = document.getElementById('loginForm');
     const messageEl = document.getElementById('formMessage');
+
+    if (new URLSearchParams(window.location.search).get('registered') === '1') {
+      ilShowMessage(messageEl, 'Account created! Log in to continue.', 'success');
+    }
     const submitBtn = document.getElementById('submitBtn');
 
     form.addEventListener('submit', () => {

@@ -201,6 +201,26 @@ async function uploadNotes(subjectId) {
   loadNotesForSubject(subjectId);
 }
 
+// ---------- View switching (sidebar) ----------
+
+function showView(viewName) {
+  document.querySelectorAll('.sd-view').forEach(v => v.style.display = 'none');
+  document.getElementById('view-' + viewName).style.display = 'block';
+
+  document.querySelectorAll('.sidebar-link[data-view]').forEach(link => {
+    link.classList.toggle('active', link.dataset.view === viewName);
+  });
+
+  if (viewName === 'dashboard') refreshSubjectCount();
+}
+
+async function refreshSubjectCount() {
+  const res = await ilAuthFetch('/subjects', { method: 'GET' });
+  if (!res || !res.ok) return;
+  const subjects = await res.json();
+  document.getElementById('subjectCount').textContent = subjects.length;
+}
+
 // ---------- Init ----------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -210,8 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.getElementById('userName').textContent = user.firstName + ' ' + user.lastName;
+  document.getElementById('userNameInline').textContent = user.firstName + ' ' + user.lastName;
+  document.getElementById('profileName').textContent = user.firstName + ' ' + user.lastName;
+  document.getElementById('profileEmail').textContent = user.email;
+  document.getElementById('profileRole').textContent = user.role;
+
   loadSubjects();
+  refreshSubjectCount();
 
   document.getElementById('showCreateFormBtn').addEventListener('click', () => {
     document.getElementById('newSubjectForm').classList.toggle('open');

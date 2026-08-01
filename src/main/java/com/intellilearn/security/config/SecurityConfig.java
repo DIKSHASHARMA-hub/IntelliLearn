@@ -34,9 +34,7 @@ public class SecurityConfig {
         this.accessDeniedHandler = accessDeniedHandler;
     }
 
-    // No explicit DaoAuthenticationProvider bean needed: Spring Security
-    // auto-configures one from the CustomUserDetailsService and PasswordEncoder
-    // beans already in the context.
+    
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -50,36 +48,32 @@ public class SecurityConfig {
                     .authenticationEntryPoint(authenticationEntryPoint)
                     .accessDeniedHandler(accessDeniedHandler))
             .authorizeHttpRequests(auth -> auth
-                    // Public endpoints
+                    
                     .requestMatchers("/api/users/register", "/api/users/login").permitAll()
 
-                    // Server-rendered pages and static assets — these just need to be
-                    // reachable so the browser can load the login/register screens
-                    // themselves; the actual API calls made from them are still
-                    // secured by the rules below.
+                    
                     .requestMatchers("/", "/login", "/register", "/home", "/teacher/dashboard", "/student/dashboard").permitAll()
                     .requestMatchers("/css/**", "/js/**", "/webjars/**", "/favicon.ico").permitAll()
 
-                    // Subjects: teachers manage them, everyone signed in can view
+                   
                     .requestMatchers(HttpMethod.POST, "/subjects/**").hasRole("TEACHER")
                     .requestMatchers(HttpMethod.PUT, "/subjects/**").hasRole("TEACHER")
                     .requestMatchers(HttpMethod.DELETE, "/subjects/**").hasRole("TEACHER")
                     .requestMatchers(HttpMethod.GET, "/subjects/**").authenticated()
 
-                    // Notes: only teachers upload/delete, anyone signed in can view/download
+                    
                     .requestMatchers(HttpMethod.POST, "/notes/upload/**").hasRole("TEACHER")
                     .requestMatchers(HttpMethod.DELETE, "/notes/**").hasRole("TEACHER")
                     .requestMatchers(HttpMethod.GET, "/notes/**").authenticated()
 
-                    // Quiz generation is student-initiated: the student picks a subject
-                    // and generates their own quiz to attempt.
+                    
                     .requestMatchers(HttpMethod.POST, "/quiz/generate/**").hasRole("STUDENT")
                     .requestMatchers(HttpMethod.GET, "/quiz/**").authenticated()
 
-                    // Only students submit quiz attempts
+                    
                     .requestMatchers("/quiz-attempt/**").hasRole("STUDENT")
 
-                    // Dashboard is per-user, just needs to be signed in
+                    
                     .requestMatchers("/dashboard/**").authenticated()
 
                     .anyRequest().authenticated()

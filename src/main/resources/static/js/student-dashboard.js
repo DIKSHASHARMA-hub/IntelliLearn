@@ -2,23 +2,46 @@
 // ilToast, escapeHtml) having already been loaded on the page.
 
 let currentQuiz = null; // { quizId, title, questions: [...] }
+let lastDashboardData = null; // cached /dashboard/student/{id} response, reused across views
 
-// ---------- Progress ----------
+// ---------- Dashboard (welcome + headline) ----------
 
-async function loadProgress() {
+async function loadDashboardSummary() {
   const user = ilGetUser();
   const res = await ilAuthFetch('/dashboard/student/' + user.id, { method: 'GET' });
-  if (!res) return;
 
-  if (!res.ok) {
+  const box = document.getElementById('dashboardHeadline');
+  if (!res || !res.ok) {
+    box.innerHTML = '<p class="empty-hint">No attempts yet — generate a quiz from a subject to get started.</p>';
+    return;
+  }
+
+  lastDashboardData = await res.json();
+
+  box.innerHTML = `
+    <div class="stat-card">
+      <p class="stat-label">Average score so far</p>
+      <p class="stat-value">${formatPercent(lastDashboardData.averageScore)}</p>
+    </div>
+  `;
+}
+
+// ---------- Progress (full stats) ----------
+
+async function loadProgressStats() {
+  if (!lastDashboardData) {
+    const user = ilGetUser();
+    const res = await ilAuthFetch('/dashboard/student/' + user.id, { method: 'GET' });
+    if (res && res.ok) lastDashboardData = await res.json();
+  }
+
+  if (!lastDashboardData) {
     document.getElementById('statsRow').innerHTML =
       '<p class="empty-hint">No attempts yet — take a quiz to see your progress here.</p>';
     return;
   }
 
-  const data = await res.json();
-  renderStats(data);
-  renderRecentAttempts(data.recentAttempts || []);
+  renderStats(lastDashboardData);
 }
 
 function renderStats(data) {
@@ -38,11 +61,23 @@ function renderStats(data) {
   `;
 }
 
+// ---------- Quizzes (attempt history) ----------
+
+async function loadQuizHistory() {
+  if (!lastDashboardData) {
+    const user = ilGetUser();
+    const res = await ilAuthFetch('/dashboard/student/' + user.id, { method: 'GET' });
+    if (res && res.ok) lastDashboardData = await res.json();
+  }
+
+  renderRecentAttempts((lastDashboardData && lastDashboardData.recentAttempts) || []);
+}
+
 function renderRecentAttempts(attempts) {
   const container = document.getElementById('recentAttempts');
 
   if (!attempts.length) {
-    container.innerHTML = '<p class="empty-hint">No attempts yet.</p>';
+    container.innerHTML = '<p class="empty-hint">No attempts yet — generate a quiz from the Subjects page.</p>';
     return;
   }
 
@@ -59,7 +94,7 @@ function formatPercent(value) {
   return Math.round(value) + '%';
 }
 
-// ---------- Browse subjects ----------
+// ---------- Subjects (browse + generate quiz) ----------
 
 async function loadSubjects() {
   const list = document.getElementById('subjectPickList');
@@ -139,6 +174,54 @@ async function downloadNotes(noteId, fileName) {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+}
+
+// ---------- My Notes (all notes across every subject) ----------
+
+async function loadMyNotes() {
+  const container = document.getElementById('myNotesList');
+  container.innerHTML = '<p class="empty-hint">Loading your notes…</p>';
+
+  const subjectsRes = await ilAuthFetch('/subjects', { method: 'GET' });
+  if (!subjectsRes || !subjectsRes.ok) {
+    container.innerHTML = '<p class="empty-hint">Could not load notes.</p>';
+    return;
+  }
+
+  const subjects = await subjectsRes.json();
+
+  if (!subjects.length) {
+    container.innerHTML = '<p class="empty-hint">No subjects yet.</p>';
+    return;
+  }
+
+  const perSubjectNotes = await Promise.all(subjects.map(async s => {
+    const res = await ilAuthFetch('/notes/subject/' + s.id, { method: 'GET' });
+    if (!res || !res.ok) return { subject: s, notes: [] };
+    const notes = await res.json().catch(() => []);
+    return { subject: s, notes: notes || [] };
+  }));
+
+  const withNotes = perSubjectNotes.filter(group => group.notes.length);
+
+  if (!withNotes.length) {
+    container.innerHTML = '<p class="empty-hint">No notes have been uploaded yet.</p>';
+    return;
+  }
+
+  container.innerHTML = withNotes.map(group => `
+    <div style="margin-bottom:18px;">
+      <h4 style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 8px;">
+        ${escapeHtml(group.subject.name)}
+      </h4>
+      ${group.notes.map(note => `
+        <div class="note-row">
+          <span>${escapeHtml(note.title)} <span class="empty-hint">(${escapeHtml(note.fileName)})</span></span>
+          <button class="ghost-btn" onclick="downloadNotes(${note.id}, '${escapeHtml(note.fileName)}')">Download</button>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
 }
 
 // ---------- Taking a quiz ----------
@@ -223,6 +306,7 @@ async function submitQuiz() {
   }
 
   const result = await res.json();
+  lastDashboardData = null; // stale now that a new attempt exists — force a refresh next time it's viewed
   renderResult(result);
   showView('result');
 }
@@ -248,17 +332,26 @@ function renderResult(result) {
   }).join('');
 }
 
-// ---------- View switching ----------
+// ---------- View switching (sidebar) ----------
 
 function showView(viewName) {
   document.querySelectorAll('.sd-view').forEach(v => v.style.display = 'none');
   document.getElementById('view-' + viewName).style.display = 'block';
+
+  document.querySelectorAll('.sidebar-link[data-view]').forEach(link => {
+    link.classList.toggle('active', link.dataset.view === viewName);
+  });
+
+  if (viewName === 'dashboard') loadDashboardSummary();
+  else if (viewName === 'subjects') loadSubjects();
+  else if (viewName === 'mynotes') loadMyNotes();
+  else if (viewName === 'quizzes') loadQuizHistory();
+  else if (viewName === 'progress') loadProgressStats();
 }
 
-function backToBrowse() {
+function backToSubjects() {
   currentQuiz = null;
-  showView('browse');
-  loadProgress();
+  showView('subjects');
 }
 
 // ---------- Init ----------
@@ -270,7 +363,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.getElementById('userName').textContent = user.firstName + ' ' + user.lastName;
-  loadProgress();
-  loadSubjects();
+  document.getElementById('userNameInline').textContent = user.firstName + ' ' + user.lastName;
+  document.getElementById('profileName').textContent = user.firstName + ' ' + user.lastName;
+  document.getElementById('profileEmail').textContent = user.email;
+  document.getElementById('profileRole').textContent = user.role;
+
+  loadDashboardSummary();
 });

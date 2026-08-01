@@ -35,7 +35,8 @@ function ilShowMessage(el, text, type) {
   el.className = 'form-message ' + type;
 }
 
-async function ilSubmitForm(url, payload, messageEl, button) {
+async function ilSubmitForm(url, payload, messageEl, button, mode) {
+  mode = mode || 'login';
   button.disabled = true;
   const originalLabel = button.textContent;
   button.textContent = 'Please wait…';
@@ -53,6 +54,13 @@ async function ilSubmitForm(url, payload, messageEl, button) {
       ilShowMessage(messageEl, data.message || 'Something went wrong. Please try again.', 'error');
       button.disabled = false;
       button.textContent = originalLabel;
+      return;
+    }
+
+    if (mode === 'register') {
+      // Don't auto-sign-in after registering — send them to log in explicitly.
+      ilShowMessage(messageEl, 'Account created — redirecting to login…', 'success');
+      window.location.href = '/login?registered=1';
       return;
     }
 

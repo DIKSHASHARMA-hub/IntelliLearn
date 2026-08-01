@@ -67,10 +67,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         } catch (Exception e) {
-            // Invalid/expired token or unknown user: leave the context unauthenticated
-            // so the request is rejected downstream by the access rules, instead of
-            // failing the whole request here. Logged so the real cause is visible
-            // instead of just a generic 401 with no explanation.
+            
             log.warn("JWT authentication failed for request {} {}: {}",
                     request.getMethod(), request.getRequestURI(), e.toString());
             SecurityContextHolder.clearContext();

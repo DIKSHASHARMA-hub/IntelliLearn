@@ -5,41 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard · IntelliLearn</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/auth.css}" href="/css/auth.css">
   <link rel="stylesheet" th:href="@{/css/dashboard.css}" href="/css/dashboard.css">
+  <link rel="stylesheet" th:href="@{/css/sidebar.css}" href="/css/sidebar.css">
   <style>body { background: var(--paper); }</style>
 </head>
 <body>
 
-  <div class="topbar">
-    <span class="brand-mark">IntelliLearn</span>
-    <div class="user-info">
-      <span><strong id="userName">—</strong> · Teacher</span>
-      <button class="logout-btn" onclick="ilLogout()">Log out</button>
-    </div>
-  </div>
+  <div class="app-shell">
 
-  <div class="dash-shell">
-    <div class="dash-header">
-      <div>
-        <p class="eyebrow">Teacher workspace</p>
-        <h1>Your subjects</h1>
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <svg class="brand-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4-8 4-8-4 8-4z"/><path d="M4 11v6l8 4 8-4v-6"/></svg>
+        IntelliLearn
       </div>
-      <button class="primary-btn" id="showCreateFormBtn">+ New subject</button>
-    </div>
 
-    <div class="inline-form" id="newSubjectForm">
-      <div class="field-row">
-        <input type="text" id="newSubjectName" placeholder="Subject name (e.g. Java)">
-        <input type="text" id="newSubjectDesc" placeholder="Description (optional)">
+      <nav class="sidebar-nav">
+        <button class="sidebar-link active" data-view="dashboard" onclick="showView('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <span class="label">Dashboard</span>
+        </button>
+        <button class="sidebar-link" data-view="subjects" onclick="showView('subjects')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5C4.7 20 4 19.3 4 18.5v-13z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H12v16h6.5c.8 0 1.5-.7 1.5-1.5v-13z"/></svg>
+          <span class="label">Subjects</span>
+        </button>
+        <button class="sidebar-link" data-view="profile" onclick="showView('profile')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1-4 4.5-6 7-6s6 2 7 6"/></svg>
+          <span class="label">Profile</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-link" onclick="ilLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          <span class="label">Logout</span>
+        </button>
       </div>
-      <button class="primary-btn" id="createSubjectBtn">Create subject</button>
-    </div>
+    </aside>
 
-    <div id="subjectList">
-      <p class="empty-hint">Loading subjects…</p>
-    </div>
+    <main class="main-content">
+      <div class="dash-shell">
+
+        <!-- ===== Dashboard (overview) ===== -->
+        <div class="sd-view" id="view-dashboard">
+          <p class="eyebrow">Teacher workspace</p>
+          <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 500; margin: 0 0 6px;">
+            Welcome, <span id="userNameInline">—</span>
+          </h1>
+          <p style="color: var(--ink-muted); font-size: 14px; margin: 0 0 28px;">
+            Upload notes to a subject and students can generate AI quizzes from them.
+          </p>
+          <div class="stats-row">
+            <div class="stat-card">
+              <p class="stat-label">Your subjects</p>
+              <p class="stat-value" id="subjectCount">—</p>
+            </div>
+          </div>
+          <button class="primary-btn" onclick="showView('subjects')">Go to Subjects →</button>
+        </div>
+
+        <!-- ===== Subjects (existing management view) ===== -->
+        <div class="sd-view" id="view-subjects" style="display:none;">
+          <div class="dash-header">
+            <div>
+              <p class="eyebrow">Teacher workspace</p>
+              <h1>Your subjects</h1>
+            </div>
+            <button class="primary-btn" id="showCreateFormBtn">+ New subject</button>
+          </div>
+
+          <div class="inline-form" id="newSubjectForm">
+            <div class="field-row">
+              <input type="text" id="newSubjectName" placeholder="Subject name (e.g. Java)">
+              <input type="text" id="newSubjectDesc" placeholder="Description (optional)">
+            </div>
+            <button class="primary-btn" id="createSubjectBtn">Create subject</button>
+          </div>
+
+          <div id="subjectList">
+            <p class="empty-hint">Loading subjects…</p>
+          </div>
+        </div>
+
+        <!-- ===== Profile ===== -->
+        <div class="sd-view" id="view-profile" style="display:none;">
+          <p class="eyebrow">Account</p>
+          <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 500; margin: 0 0 20px;">Profile</h1>
+          <div class="stat-card" style="max-width: 360px;">
+            <p class="stat-label">Name</p>
+            <p style="font-size: 16px; font-weight: 600; margin: 0 0 16px;" id="profileName">—</p>
+            <p class="stat-label">Email</p>
+            <p style="font-size: 16px; font-weight: 600; margin: 0 0 16px;" id="profileEmail">—</p>
+            <p class="stat-label">Role</p>
+            <p style="font-size: 16px; font-weight: 600; margin: 0;" id="profileRole">—</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
   </div>
 
   <div class="toast" id="toast"></div>

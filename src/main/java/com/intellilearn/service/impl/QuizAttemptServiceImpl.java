@@ -64,8 +64,9 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
 
         List<Question> questions = questionRepository.findByQuiz(quiz);
-        if (request.getAnswers().size() > questions.size()) {
-            throw new IllegalArgumentException("Invalid number of answers submitted.");
+        if (request.getAnswers().size() != questions.size()) {
+            throw new IllegalArgumentException(
+                    "Please answer all " + questions.size() + " questions before submitting.");
         }
 
         QuizAttempt attempt = new QuizAttempt();
@@ -79,7 +80,14 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         List<AnswerResultResponse> answerResponses = new ArrayList<>();
         List<AttemptAnswer> attemptAnswers = new ArrayList<>();
 
+        java.util.Set<Long> seenQuestionIds = new java.util.HashSet<>();
+
         for (AnswerRequest answerRequest : request.getAnswers()) {
+
+            if (!seenQuestionIds.add(answerRequest.getQuestionId())) {
+                throw new IllegalArgumentException(
+                        "Duplicate answer submitted for question " + answerRequest.getQuestionId());
+            }
 
             Question question = questionRepository.findById(answerRequest.getQuestionId())
                     .orElseThrow(() -> new EntityNotFoundException(

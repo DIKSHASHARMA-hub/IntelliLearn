@@ -26,8 +26,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found: " + email));
 
-        // Role is stored without the "ROLE_" prefix (e.g. "TEACHER"); Spring
-        // Security's hasRole("TEACHER") expects the authority "ROLE_TEACHER".
+       
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())

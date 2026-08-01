@@ -31,10 +31,7 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    /**
-     * Generates a signed JWT for the given user, embedding their id and role
-     * as claims so downstream code can authorize requests without a DB hit.
-     */
+   
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
@@ -61,9 +58,7 @@ public class JwtUtil {
         return extractAllClaims(token).get("userId", Long.class);
     }
 
-    /**
-     * Returns true only if the token parses, is correctly signed, and is not expired.
-     */
+   
     public boolean isTokenValid(String token) {
         try {
             Claims claims = extractAllClaims(token);
