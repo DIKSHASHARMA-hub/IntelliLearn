@@ -42,9 +42,7 @@ public class NotesServiceImpl implements NotesService {
 
     private final Path uploadPath = Paths.get("uploads");
 
-    // PDF files begin with this 5-byte magic number ("%PDF-"). Checking the
-    // actual bytes instead of trusting the client-supplied Content-Type header
-    // prevents someone from uploading arbitrary files by simply relabeling them.
+    
     private static final byte[] PDF_MAGIC_BYTES =
             new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D };
 
@@ -89,10 +87,7 @@ public class NotesServiceImpl implements NotesService {
                 Files.createDirectories(uploadDir);
             }
 
-            // Never trust the client-supplied filename for the actual disk path —
-            // it could contain "../" segments. Keep the original name only for
-            // display (sanitized to its base name); the file on disk gets a
-            // random, collision-proof name of our own choosing.
+           
             String originalName = sanitizeFileName(file.getOriginalFilename());
             String storedFileName = UUID.randomUUID() + "_" + originalName;
 
@@ -168,9 +163,7 @@ public class NotesServiceImpl implements NotesService {
                 .orElseThrow(() ->
                         new NoteNotFoundException("Notes not found."));
 
-        // Only the teacher who uploaded a note may remove it. Notes uploaded
-        // before this check existed have no recorded uploader (null) — those
-        // stay removable by any teacher rather than becoming permanently stuck.
+        
         User uploader = notes.getUploadedBy();
         if (uploader != null && !uploader.getId().equals(securityUtils.getCurrentUser().getId())) {
             throw new AccessDeniedException("You can only remove notes you uploaded yourself.");
@@ -182,9 +175,7 @@ public class NotesServiceImpl implements NotesService {
     @Override
     public void deleteAllNotesForSubject(Long subjectId) {
 
-        // Used internally when a whole subject is deleted — ownership of the
-        // subject itself is already verified by the caller (SubjectServiceImpl),
-        // so this intentionally does not re-check per-note ownership.
+        
         List<Notes> notes = notesRepository.findBySubjectId(subjectId);
 
         for (Notes n : notes) {
@@ -194,9 +185,7 @@ public class NotesServiceImpl implements NotesService {
 
     private void deleteFileAndRow(Notes notes) {
         try {
-            // Preserve quiz/attempt history: if a quiz was generated from this
-            // note, keep the quiz (and its questions/attempts) — just detach
-            // its link to the note being removed, rather than deleting it.
+           
             List<Quiz> linkedQuizzes = quizRepository.findByNotesId(notes.getId());
             for (Quiz quiz : linkedQuizzes) {
                 quiz.setNotes(null);
@@ -222,14 +211,13 @@ public class NotesServiceImpl implements NotesService {
                 notes.getUploadedBy() != null ? notes.getUploadedBy().getId() : null);
     }
 
-    /** Strips any path segments from a client-supplied filename, keeping just the base name. */
+    
     private String sanitizeFileName(String originalFilename) {
         if (originalFilename == null || originalFilename.isBlank()) {
             return "notes.pdf";
         }
         String base = Paths.get(originalFilename).getFileName().toString();
-        // Belt-and-braces: also strip any remaining separator characters the
-        // client might have sent literally (e.g. encoded slashes).
+       
         return base.replaceAll("[\\\\/]", "_");
     }
 

@@ -55,7 +55,7 @@
 
   <script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
   <script>
-    // Signature moment: cycle the highlighted keyword to echo the AI-highlighting theme
+    
     const words = ['Practice.', 'Progress.', 'Mastery.'];
     let wIndex = 0;
     const wordEl = document.getElementById('rotatingWord');
@@ -63,7 +63,7 @@
       wIndex = (wIndex + 1) % words.length;
       wordEl.style.animation = 'none';
       wordEl.textContent = words[wIndex];
-      void wordEl.offsetWidth; // restart the CSS animation
+      void wordEl.offsetWidth; 
       wordEl.style.animation = '';
     }, 3600);
 

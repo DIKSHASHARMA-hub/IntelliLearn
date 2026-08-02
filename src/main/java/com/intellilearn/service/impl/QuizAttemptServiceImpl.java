@@ -55,9 +55,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     @Override
     public QuizAttemptResponse submitQuiz(QuizSubmissionRequest request) {
 
-        // The student is the authenticated user making the call, never the
-        // client-supplied studentId in the request body — otherwise any
-        // signed-in student could submit attempts on someone else's behalf.
+        
         User student = securityUtils.getCurrentUser();
 
         Quiz quiz = quizRepository.findById(request.getQuizId())
@@ -93,7 +91,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                     .orElseThrow(() -> new EntityNotFoundException(
                             "Question not found : " + answerRequest.getQuestionId()));
 
-            // Verify that the question belongs to the submitted quiz
+           
             if (!question.getQuiz().getId().equals(quiz.getId())) {
                 throw new IllegalArgumentException(
                         "Question does not belong to the selected quiz.");
@@ -106,7 +104,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                 score++;
             }
 
-            // Build response object
+            
             AnswerResultResponse answerResponse = new AnswerResultResponse();
             answerResponse.setQuestionId(question.getId());
             answerResponse.setSelectedAnswer(answerRequest.getSelectedAnswer());
@@ -115,7 +113,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
 
             answerResponses.add(answerResponse);
 
-            // Prepare AttemptAnswer (do not save yet)
+           
             AttemptAnswer attemptAnswer = new AttemptAnswer();
             attemptAnswer.setQuestion(question);
             attemptAnswer.setSelectedAnswer(answerRequest.getSelectedAnswer());
@@ -123,17 +121,17 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
 
             attemptAnswers.add(attemptAnswer);
         }
-        // Save QuizAttempt first
+        
         attempt.setScore(score);
         quizAttemptRepository.save(attempt);
 
-        // Now save AttemptAnswer records
+        
         for (AttemptAnswer answer : attemptAnswers) {
             answer.setQuizAttempt(attempt);
             attemptAnswerRepository.save(answer);
         }
 
-        // Build response
+        
         QuizAttemptResponse response = new QuizAttemptResponse();
 
         response.setAttemptId(attempt.getAttemptId());

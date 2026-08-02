@@ -1,5 +1,4 @@
-// Shared across teacher-dashboard.js and student-dashboard.js.
-// Relies on auth.js (ilGetToken, ilGetUser, ilLogout) being loaded first.
+
 
 function ilAuthHeaders(extra) {
   const headers = Object.assign({}, extra || {});
@@ -15,7 +14,7 @@ async function ilAuthFetch(url, options) {
   const res = await fetch(url, options);
 
   if (res.status === 401) {
-    // Token missing/expired — session is no longer valid.
+   
     ilLogout();
     return null;
   }

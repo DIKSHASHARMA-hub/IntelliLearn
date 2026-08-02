@@ -1,7 +1,3 @@
-// Teacher dashboard logic. Relies on auth.js and common.js (ilAuthFetch,
-// ilToast, escapeHtml) having already been loaded on the page.
-
-// ---------- Subjects ----------
 
 async function loadSubjects() {
   const list = document.getElementById('subjectList');
@@ -168,7 +164,7 @@ async function deleteSubject(subjectId, subjectName) {
   loadSubjects();
 }
 
-// ---------- Notes (a subject can have multiple) ----------
+
 
 async function loadNotesForSubject(subjectId) {
   const container = document.getElementById('notes-' + subjectId);
@@ -236,8 +232,7 @@ async function uploadNotes(subjectId) {
 
   ilToast('Uploading…');
 
-  // Note: no Content-Type header here on purpose — the browser sets the
-  // correct multipart boundary automatically for FormData.
+  
   const res = await ilAuthFetch('/notes/upload/' + subjectId, {
     method: 'POST',
     body: formData
@@ -256,7 +251,7 @@ async function uploadNotes(subjectId) {
   loadNotesForSubject(subjectId);
 }
 
-// ---------- View switching (sidebar) ----------
+
 
 function showView(viewName) {
   document.querySelectorAll('.sd-view').forEach(v => v.style.display = 'none');

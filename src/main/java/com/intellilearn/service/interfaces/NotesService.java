@@ -18,7 +18,7 @@ public interface NotesService {
 
     void deleteNotes(Long noteId);
 
-    /** Used when a whole subject is deleted, to clean up all of its notes (rows + files). */
+   
     void deleteAllNotesForSubject(Long subjectId);
 
 }

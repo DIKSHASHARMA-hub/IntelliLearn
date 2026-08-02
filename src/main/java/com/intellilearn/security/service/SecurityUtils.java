@@ -10,11 +10,7 @@ import com.intellilearn.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
-/**
- * Resolves the currently authenticated user from the SecurityContext.
- * Use this instead of trusting a client-supplied id (e.g. studentId in a
- * request body or path variable) for "who am I" checks.
- */
+
 @Component
 public class SecurityUtils {
 
@@ -24,7 +20,7 @@ public class SecurityUtils {
         this.userRepository = userRepository;
     }
 
-    /** Email (username) of the currently authenticated user, or null if none. */
+    
     public String getCurrentUserEmail() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -40,7 +36,7 @@ public class SecurityUtils {
         return principal.toString();
     }
 
-    /** Loads the full User entity for the currently authenticated user. */
+ 
     public User getCurrentUser() {
         String email = getCurrentUserEmail();
 

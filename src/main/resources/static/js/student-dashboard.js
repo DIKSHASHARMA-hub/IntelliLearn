@@ -1,10 +1,6 @@
-// Student dashboard logic. Relies on auth.js and common.js (ilAuthFetch,
-// ilToast, escapeHtml) having already been loaded on the page.
 
-let currentQuiz = null; // { quizId, title, questions: [...] }
-let lastDashboardData = null; // cached /dashboard/student/{id} response, reused across views
-
-// ---------- Dashboard (welcome + headline) ----------
+let currentQuiz = null; 
+let lastDashboardData = null; 
 
 async function loadDashboardSummary() {
   const user = ilGetUser();
@@ -26,7 +22,7 @@ async function loadDashboardSummary() {
   `;
 }
 
-// ---------- Progress (full stats) ----------
+
 
 async function loadProgressStats() {
   if (!lastDashboardData) {
@@ -61,7 +57,7 @@ function renderStats(data) {
   `;
 }
 
-// ---------- Quizzes (attempt history) ----------
+
 
 async function loadQuizHistory() {
   if (!lastDashboardData) {
@@ -94,7 +90,7 @@ function formatPercent(value) {
   return Math.round(value) + '%';
 }
 
-// ---------- Subjects (browse + generate quiz) ----------
+
 
 async function loadSubjects() {
   const list = document.getElementById('subjectPickList');
@@ -176,7 +172,7 @@ async function downloadNotes(noteId, fileName) {
   window.URL.revokeObjectURL(url);
 }
 
-// ---------- My Notes (all notes across every subject) ----------
+
 
 async function loadMyNotes() {
   const container = document.getElementById('myNotesList');
@@ -224,7 +220,7 @@ async function loadMyNotes() {
   `).join('');
 }
 
-// ---------- Taking a quiz ----------
+
 
 async function generateAndTakeQuiz(noteId) {
   const btn = document.getElementById('genBtn-' + noteId);
@@ -332,7 +328,7 @@ function renderResult(result) {
   }).join('');
 }
 
-// ---------- View switching (sidebar) ----------
+
 
 function showView(viewName) {
   document.querySelectorAll('.sd-view').forEach(v => v.style.display = 'none');
@@ -354,7 +350,7 @@ function backToSubjects() {
   showView('subjects');
 }
 
-// ---------- Init ----------
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const user = ilGetUser();

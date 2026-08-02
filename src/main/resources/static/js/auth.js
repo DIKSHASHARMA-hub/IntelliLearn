@@ -1,5 +1,4 @@
-// Talks to the existing JSON REST API (/api/users/register, /api/users/login)
-// and stores the returned JWT for subsequent requests.
+
 
 const IL_TOKEN_KEY = 'il_token';
 const IL_USER_KEY = 'il_user';
@@ -58,7 +57,7 @@ async function ilSubmitForm(url, payload, messageEl, button, mode) {
     }
 
     if (mode === 'register') {
-      // Don't auto-sign-in after registering — send them to log in explicitly.
+     
       ilShowMessage(messageEl, 'Account created — redirecting to login…', 'success');
       window.location.href = '/login?registered=1';
       return;

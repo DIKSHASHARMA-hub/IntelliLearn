@@ -93,13 +93,7 @@ public class SubjectServiceImpl implements SubjectService {
         return mapToResponse(updatedSubject);
     }
 
-    /**
-     * Only the teacher who created a subject may delete it. Deleting also
-     * removes everything hanging off it — notes (rows + files on disk),
-     * quizzes, their questions, and any student attempts/answers against
-     * those quizzes — so the delete doesn't fail with a foreign-key
-     * constraint error and doesn't leave orphaned rows.
-     */
+    
     @Override
     @Transactional
     public void deleteSubject(Long id) {
@@ -110,9 +104,7 @@ public class SubjectServiceImpl implements SubjectService {
 
         requireOwnership(subject);
 
-        // 1. Quizzes for this subject, and everything hanging off each one —
-        //    this must happen BEFORE deleting notes, since each Quiz now has
-        //    a foreign key to the Notes it was generated from.
+       
         List<Quiz> quizzes = quizRepository.findBySubject(subject);
 
         for (Quiz quiz : quizzes) {
@@ -132,13 +124,9 @@ public class SubjectServiceImpl implements SubjectService {
 
         quizRepository.deleteAll(quizzes);
 
-        // 2. Notes (files + rows) — safe to remove now that no quiz references them.
-        //    This bypasses per-note ownership checks intentionally: ownership
-        //    of the *subject* has already been verified above, which is the
-        //    authority that matters when the whole subject is going away.
         notesService.deleteAllNotesForSubject(id);
 
-        // 3. Finally, the subject itself
+        
         subjectRepository.delete(subject);
     }
 
@@ -162,12 +150,7 @@ public class SubjectServiceImpl implements SubjectService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Only the teacher who created a subject may edit or delete it. Subjects
-     * created before this check existed have no recorded creator (null) —
-     * those stay editable by any teacher rather than becoming permanently
-     * stuck with no owner able to manage them.
-     */
+   
     private void requireOwnership(Subject subject) {
         User creator = subject.getCreatedBy();
         User currentUser = securityUtils.getCurrentUser();

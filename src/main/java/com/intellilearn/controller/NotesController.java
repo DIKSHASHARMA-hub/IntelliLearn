@@ -35,10 +35,7 @@ public class NotesController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /**
-     * A subject can have multiple notes uploaded to it, so this returns all
-     * of them rather than a single note.
-     */
+   
     @GetMapping("/subject/{subjectId}")
     public ResponseEntity<List<NotesResponse>> getNotesBySubject(
             @PathVariable Long subjectId) {

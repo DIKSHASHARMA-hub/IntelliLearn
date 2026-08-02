@@ -31,7 +31,7 @@ public class DashboardController {
     public ResponseEntity<DashboardResponseDTO> getStudentDashboard(
             @PathVariable Long studentId) {
 
-        // A student may only view their own dashboard; teachers can view any student's.
+        
         boolean isOwnDashboard = securityUtils.isCurrentUser(studentId);
         boolean isTeacher = securityUtils.currentUserHasRole("TEACHER");
 

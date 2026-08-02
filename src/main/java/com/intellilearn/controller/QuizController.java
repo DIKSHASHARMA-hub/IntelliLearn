@@ -18,10 +18,7 @@ public class QuizController {
         this.quizService = quizService;
     }
 
-    /**
-     * Generate a new quiz from a single note (PDF) — each note gets its
-     * own quiz, rather than combining every note in a subject into one.
-     */
+    
     @PostMapping("/generate/note/{noteId}")
     public ResponseEntity<QuizResponseDTO> generateQuizForNote(
             @PathVariable Long noteId) {
@@ -31,9 +28,7 @@ public class QuizController {
         return new ResponseEntity<>(quiz, HttpStatus.CREATED);
     }
 
-    /**
-     * Get an already generated quiz.
-     */
+    
     @GetMapping("/{quizId}")
     public ResponseEntity<QuizResponseDTO> getQuiz(
             @PathVariable Long quizId) {
@@ -43,11 +38,7 @@ public class QuizController {
         return ResponseEntity.ok(quiz);
     }
 
-    /**
-     * Find the (most recently generated) quiz for a subject — kept for
-     * completeness; not currently used by the frontend since generation
-     * is now per-note.
-     */
+   
     @GetMapping("/subject/{subjectId}")
     public ResponseEntity<QuizResponseDTO> getQuizBySubject(
             @PathVariable Long subjectId) {
@@ -57,9 +48,6 @@ public class QuizController {
         return ResponseEntity.ok(quiz);
     }
 
-    /**
-     * Find the (most recently generated) quiz for a specific note.
-     */
     @GetMapping("/note/{noteId}")
     public ResponseEntity<QuizResponseDTO> getQuizByNote(
             @PathVariable Long noteId) {
