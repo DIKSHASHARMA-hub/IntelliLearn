@@ -34,20 +34,29 @@ function renderSubjectCard(subject) {
   const user = ilGetUser();
   const isOwner = subject.createdByUserId === null || subject.createdByUserId === user.id;
 
-  const deleteBtn = isOwner
-    ? `<button class="ghost-btn" onclick="event.stopPropagation(); deleteSubject(${subject.id}, '${escapeHtml(subject.name)}')">Delete</button>`
+  const ownerActions = isOwner
+    ? `<button class="ghost-btn" onclick="event.stopPropagation(); toggleEditSubject(${subject.id})">Edit</button>
+       <button class="ghost-btn" onclick="event.stopPropagation(); deleteSubject(${subject.id}, '${escapeHtml(subject.name)}')">Delete</button>`
     : '';
 
   card.innerHTML = `
     <div class="subject-card-head">
       <div class="subject-title-group" onclick="toggleSubject(${subject.id})" style="cursor:pointer; flex:1;">
-        <h3>${escapeHtml(subject.name)}</h3>
-        <p>${subject.description ? escapeHtml(subject.description) : 'No description'}</p>
+        <h3 id="subjectName-${subject.id}">${escapeHtml(subject.name)}</h3>
+        <p id="subjectDesc-${subject.id}">${subject.description ? escapeHtml(subject.description) : 'No description'}</p>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
-        ${deleteBtn}
+        ${ownerActions}
         <span class="chevron" onclick="toggleSubject(${subject.id})" style="cursor:pointer;">&#9656;</span>
       </div>
+    </div>
+    <div class="inline-form" id="editForm-${subject.id}">
+      <div class="field-row">
+        <input type="text" id="editName-${subject.id}" value="${escapeHtml(subject.name)}" placeholder="Subject name">
+        <input type="text" id="editDesc-${subject.id}" value="${subject.description ? escapeHtml(subject.description) : ''}" placeholder="Description (optional)">
+      </div>
+      <button class="primary-btn" onclick="saveSubjectEdit(${subject.id})">Save changes</button>
+      <button class="ghost-btn" onclick="toggleEditSubject(${subject.id})">Cancel</button>
     </div>
     <div class="subject-body">
       <div class="subject-section">
@@ -106,6 +115,37 @@ async function createSubject() {
   document.getElementById('newSubjectForm').classList.remove('open');
   ilToast('Subject created');
   loadSubjects();
+}
+
+function toggleEditSubject(subjectId) {
+  document.getElementById('editForm-' + subjectId).classList.toggle('open');
+}
+
+async function saveSubjectEdit(subjectId) {
+  const nameInput = document.getElementById('editName-' + subjectId);
+  const descInput = document.getElementById('editDesc-' + subjectId);
+
+  const name = nameInput.value.trim();
+  if (!name) { ilToast('Subject name is required', true); return; }
+
+  const res = await ilAuthFetch('/subjects/' + subjectId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, description: descInput.value.trim() || null })
+  });
+  if (!res) return;
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    ilToast(err.message || 'Could not update subject', true);
+    return;
+  }
+
+  const updated = await res.json();
+  document.getElementById('subjectName-' + subjectId).textContent = updated.name;
+  document.getElementById('subjectDesc-' + subjectId).textContent = updated.description || 'No description';
+  toggleEditSubject(subjectId);
+  ilToast('Subject updated');
 }
 
 async function deleteSubject(subjectId, subjectName) {
