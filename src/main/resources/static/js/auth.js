@@ -1,5 +1,3 @@
-
-
 const IL_TOKEN_KEY = 'il_token';
 const IL_USER_KEY = 'il_user';
 
@@ -10,6 +8,7 @@ function ilStoreSession(userResponse) {
     firstName: userResponse.firstName,
     lastName: userResponse.lastName,
     email: userResponse.email,
+    phone: userResponse.phone,
     role: userResponse.role
   }));
 }
@@ -17,6 +16,15 @@ function ilStoreSession(userResponse) {
 function ilGetUser() {
   const raw = localStorage.getItem(IL_USER_KEY);
   return raw ? JSON.parse(raw) : null;
+}
+
+function ilUpdateStoredUser(userResponse) {
+  const current = ilGetUser() || {};
+  localStorage.setItem(IL_USER_KEY, JSON.stringify(Object.assign({}, current, {
+    firstName: userResponse.firstName,
+    lastName: userResponse.lastName,
+    phone: userResponse.phone
+  })));
 }
 
 function ilGetToken() {

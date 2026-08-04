@@ -1,4 +1,3 @@
-
 let currentQuiz = null; 
 let lastDashboardData = null; 
 
@@ -350,7 +349,56 @@ function backToSubjects() {
   showView('subjects');
 }
 
+// ---------- Profile ----------
 
+function renderProfile() {
+  const user = ilGetUser();
+  document.getElementById('profileName').textContent = user.firstName + ' ' + user.lastName;
+  document.getElementById('profileEmail').textContent = user.email;
+  document.getElementById('profilePhone').textContent = user.phone || '—';
+  document.getElementById('profileRole').textContent = user.role;
+}
+
+function toggleEditProfile() {
+  const user = ilGetUser();
+  document.getElementById('editFirstName').value = user.firstName;
+  document.getElementById('editLastName').value = user.lastName;
+  document.getElementById('editPhone').value = user.phone || '';
+  document.getElementById('editProfileForm').classList.toggle('open');
+}
+
+async function saveProfileEdit() {
+  const firstNameInput = document.getElementById('editFirstName');
+  const lastNameInput = document.getElementById('editLastName');
+  const phoneInput = document.getElementById('editPhone');
+
+  const firstName = firstNameInput.value.trim();
+  const lastName = lastNameInput.value.trim();
+  const phone = phoneInput.value.trim();
+
+  if (!firstName || !lastName) { ilToast('First and last name are required', true); return; }
+  if (!/^[0-9]{10}$/.test(phone)) { ilToast('Phone number must be 10 digits', true); return; }
+
+  const res = await ilAuthFetch('/api/users/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ firstName: firstName, lastName: lastName, phone: phone })
+  });
+  if (!res) return;
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    ilToast(err.message || 'Could not update profile', true);
+    return;
+  }
+
+  const updated = await res.json();
+  ilUpdateStoredUser(updated);
+  document.getElementById('userNameInline').textContent = updated.firstName + ' ' + updated.lastName;
+  renderProfile();
+  document.getElementById('editProfileForm').classList.remove('open');
+  ilToast('Profile updated');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const user = ilGetUser();
@@ -360,9 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('userNameInline').textContent = user.firstName + ' ' + user.lastName;
-  document.getElementById('profileName').textContent = user.firstName + ' ' + user.lastName;
-  document.getElementById('profileEmail').textContent = user.email;
-  document.getElementById('profileRole').textContent = user.role;
+  renderProfile();
 
   loadDashboardSummary();
 });

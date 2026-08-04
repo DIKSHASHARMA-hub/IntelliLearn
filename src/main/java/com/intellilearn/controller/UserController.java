@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.intellilearn.dto.request.LoginRequest;
 import com.intellilearn.dto.request.RegisterRequest;
+import com.intellilearn.dto.request.UserUpdateRequest;
 import com.intellilearn.dto.response.UserResponse;
 import com.intellilearn.service.interfaces.UserService;
 
@@ -35,6 +36,15 @@ public class UserController {
             @Valid @RequestBody LoginRequest request) {
 
         UserResponse response = userService.login(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserResponse> updateProfile(
+            @Valid @RequestBody UserUpdateRequest request) {
+
+        UserResponse response = userService.updateProfile(request);
 
         return ResponseEntity.ok(response);
     }

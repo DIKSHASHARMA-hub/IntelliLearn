@@ -97,8 +97,22 @@
             <p style="font-size: 16px; font-weight: 600; margin: 0 0 16px;" id="profileName">—</p>
             <p class="stat-label">Email</p>
             <p style="font-size: 16px; font-weight: 600; margin: 0 0 16px;" id="profileEmail">—</p>
+            <p class="stat-label">Phone</p>
+            <p style="font-size: 16px; font-weight: 600; margin: 0 0 16px;" id="profilePhone">—</p>
             <p class="stat-label">Role</p>
-            <p style="font-size: 16px; font-weight: 600; margin: 0;" id="profileRole">—</p>
+            <p style="font-size: 16px; font-weight: 600; margin: 0 0 16px;" id="profileRole">—</p>
+            <button class="ghost-btn" id="editProfileBtn" onclick="toggleEditProfile()">Edit</button>
+          </div>
+          <div class="inline-form" id="editProfileForm" style="max-width: 360px;">
+            <div class="field-row">
+              <input type="text" id="editFirstName" placeholder="First name">
+              <input type="text" id="editLastName" placeholder="Last name">
+            </div>
+            <div class="field-row">
+              <input type="text" id="editPhone" placeholder="Phone (10 digits)">
+            </div>
+            <button class="primary-btn" onclick="saveProfileEdit()">Save changes</button>
+            <button class="ghost-btn" onclick="toggleEditProfile()">Cancel</button>
           </div>
         </div>
 

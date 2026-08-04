@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.intellilearn.dto.request.LoginRequest;
 import com.intellilearn.dto.request.RegisterRequest;
+import com.intellilearn.dto.request.UserUpdateRequest;
 import com.intellilearn.dto.response.UserResponse;
 import com.intellilearn.entity.Role;
 import com.intellilearn.entity.User;
@@ -14,6 +15,7 @@ import com.intellilearn.exception.InvalidCredentialsException;
 import com.intellilearn.repository.RoleRepository;
 import com.intellilearn.repository.UserRepository;
 import com.intellilearn.security.jwt.JwtUtil;
+import com.intellilearn.security.service.SecurityUtils;
 import com.intellilearn.service.interfaces.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -31,6 +33,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private SecurityUtils securityUtils;
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -93,6 +98,33 @@ public class UserServiceImpl implements UserService {
         response.setPhone(user.getPhone());
         response.setRole(user.getRole().getName());
         response.setToken(jwtUtil.generateToken(user));
+
+        return response;
+    }
+
+    @Override
+    public UserResponse updateProfile(UserUpdateRequest request) {
+
+        User user = securityUtils.getCurrentUser();
+
+        if (!request.getPhone().equals(user.getPhone())
+                && userRepository.existsByPhone(request.getPhone())) {
+            throw new IllegalArgumentException("Phone number is already in use.");
+        }
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPhone(request.getPhone());
+
+        User savedUser = userRepository.save(user);
+
+        UserResponse response = new UserResponse();
+        response.setId(savedUser.getId());
+        response.setFirstName(savedUser.getFirstName());
+        response.setLastName(savedUser.getLastName());
+        response.setEmail(savedUser.getEmail());
+        response.setPhone(savedUser.getPhone());
+        response.setRole(savedUser.getRole().getName());
 
         return response;
     }
